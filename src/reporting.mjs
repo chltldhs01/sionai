@@ -1,4 +1,4 @@
-import { SpreadsheetFile, Workbook } from "@oai/artifact-tool";
+import ExcelJS from "exceljs";
 
 const CHANNELS = ["파워링크", "쇼핑검색"];
 
@@ -123,10 +123,10 @@ function columnIndexToLetters(index) {
   return output;
 }
 
-function parseCellRef(cellRef) {
-  const match = cellRef.match(/^([A-Z]+)(\d+)$/);
+function parseCellRef(cellAddress) {
+  const match = cellAddress.match(/^([A-Z]+)(\d+)$/);
   if (!match) {
-    throw new Error(`지원하지 않는 셀 주소입니다: ${cellRef}`);
+    throw new Error(`지원하지 않는 셀 주소입니다: ${cellAddress}`);
   }
   return {
     col: columnLettersToIndex(match[1]),
@@ -153,7 +153,7 @@ function groupBy(items, getKey) {
 function buildRecords(csvText) {
   const rows = parseCsv(csvText.replace(/^\uFEFF/, ""));
   if (rows.length < 3) {
-    throw new Error("CSV 구조를 인식하지 못했습니다. 네이버 SA 보고서 형식인지 확인해주세요.");
+    throw new Error("CSV 구조를 인식하지 못했습니다. 네이버 SA 보고서 형식인지 확인해 주세요.");
   }
 
   const header = rows[1];
@@ -163,7 +163,7 @@ function buildRecords(csvText) {
     .filter((row) => row.length >= header.length)
     .map((row) => Object.fromEntries(header.map((key, index) => [key, row[index] ?? ""])))
     .map((row) => {
-      const date = parseDateLabel(row["일별"]);
+      const date = parseDateLabel(row["일계"]);
       if (!date) {
         return null;
       }
@@ -308,67 +308,6 @@ function parseMemoEntries(memoText) {
     .filter(Boolean);
 }
 
-function setHeaderStyle(range, fill = "#12343B") {
-  range.format = {
-    fill,
-    font: { bold: true, color: "#FFFFFF" },
-    wrapText: true,
-    verticalAlignment: "center",
-  };
-}
-
-function setBodyTableStyle(range) {
-  range.format = {
-    verticalAlignment: "center",
-  };
-}
-
-function addKpiCard(sheet, cell, title, value, note, tone) {
-  const fillMap = {
-    orange: "#FFF1EB",
-    teal: "#EAF8F6",
-    navy: "#EEF4F8",
-    sand: "#F7F1E8",
-  };
-  const { row, col } = parseCellRef(cell);
-  const titleRange = sheet.getRange(cellRef(row, col));
-  const valueCell = sheet.getRange(cellRef(row + 1, col));
-  const noteCell = sheet.getRange(cellRef(row + 2, col));
-  const block = sheet.getRange(`${cellRef(row, col)}:${cellRef(row + 2, col + 1)}`);
-
-  block.merge(true);
-  block.format = {
-    fill: fillMap[tone] || "#FFFFFF",
-  };
-
-  titleRange.values = [[title]];
-  titleRange.format = {
-    font: { bold: true, color: "#5A6B7B", size: 10 },
-  };
-
-  valueCell.values = [[value]];
-  valueCell.format = {
-    font: { bold: true, color: "#153147", size: 18 },
-  };
-
-  noteCell.values = [[note]];
-  noteCell.format = {
-    font: { color: "#5A6B7B", size: 10 },
-    wrapText: true,
-  };
-}
-
-function addSectionTitle(sheet, rangeRef, text) {
-  const range = sheet.getRange(rangeRef);
-  range.merge();
-  range.values = [[text]];
-  range.format = {
-    fill: "#12343B",
-    font: { bold: true, color: "#FFFFFF", size: 12 },
-    verticalAlignment: "center",
-  };
-}
-
 function buildNarrative(brand, startDate, endDate, overall, channelSummary, topKeywords, memoEntries) {
   const powerlink = channelSummary.find((row) => row.name === "파워링크");
   const shopping = channelSummary.find((row) => row.name === "쇼핑검색");
@@ -378,10 +317,10 @@ function buildNarrative(brand, startDate, endDate, overall, channelSummary, topK
     .map((row) => `${row.query}(${row.channel})`);
 
   return [
-    `${formatDate(startDate)}부터 ${formatDate(endDate)}까지 ${brand} 네이버 SA는 총 광고비 ${currency(overall.cost)}를 집행했고, 구매완료 ${overall.purchaseConversions.toLocaleString("ko-KR")}건과 구매완료 매출 ${currency(overall.purchaseRevenue)}를 기록했습니다.`,
-    `광고주 관점의 핵심 효율 지표인 구매완료 ROAS는 ${overall.purchaseRoas.toLocaleString("ko-KR")}%이며, 구매완료 CPA는 ${currency(overall.purchaseCpa)} 수준입니다.`,
+    `${formatDate(startDate)}부터 ${formatDate(endDate)}까지 ${brand} 네이버 SA의 총 광고비는 ${currency(overall.cost)}이며, 구매완료 ${overall.purchaseConversions.toLocaleString("ko-KR")}건과 구매완료 매출 ${currency(overall.purchaseRevenue)}를 기록했습니다.`,
+    `광고주 기준 핵심 효율 지표인 구매완료 ROAS는 ${overall.purchaseRoas.toLocaleString("ko-KR")}%이며, 구매완료 CPA는 ${currency(overall.purchaseCpa)}입니다.`,
     powerlink
-      ? `파워링크는 구매완료 ROAS ${powerlink.purchaseRoas.toLocaleString("ko-KR")}%로 효율 역할을 맡고 있습니다.`
+      ? `파워링크는 구매완료 ROAS ${powerlink.purchaseRoas.toLocaleString("ko-KR")}%로 효율을 만들고 있습니다.`
       : "파워링크 데이터는 이번 보고 구간에 없습니다.",
     shopping
       ? `쇼핑검색은 구매완료 매출 ${currency(shopping.purchaseRevenue)}로 볼륨 확보에 기여했습니다.`
@@ -390,30 +329,146 @@ function buildNarrative(brand, startDate, endDate, overall, channelSummary, topK
       ? `구매 기여 키워드는 ${leadingKeywords.join(", ")} 중심으로 확인됩니다.`
       : "키워드별 구매 기여는 추가 확인이 필요합니다.",
     memoEntries.length
-      ? `운영 메모 기준으로는 ${memoEntries.slice(0, 3).join(" / ")} 등의 조정이 반영되었습니다.`
+      ? `운영 메모 기준으로는 ${memoEntries.slice(0, 3).join(" / ")} 조정이 반영되었습니다.`
       : "운영 메모는 별도 입력되지 않았습니다.",
   ];
 }
 
-function writeTable(sheet, startCell, headers, rows, numberFormats = {}) {
+function toArgb(hex) {
+  return `FF${hex.replace("#", "").toUpperCase()}`;
+}
+
+function applyFill(cell, hex) {
+  cell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: toArgb(hex) },
+  };
+}
+
+function applyBorder(cell, color = "D9E2EC") {
+  cell.border = {
+    top: { style: "thin", color: { argb: `FF${color}` } },
+    left: { style: "thin", color: { argb: `FF${color}` } },
+    bottom: { style: "thin", color: { argb: `FF${color}` } },
+    right: { style: "thin", color: { argb: `FF${color}` } },
+  };
+}
+
+function styleRange(worksheet, startRow, startCol, endRow, endCol, callback) {
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (let col = startCol; col <= endCol; col += 1) {
+      callback(worksheet.getCell(row, col), row, col);
+    }
+  }
+}
+
+function addMergedSectionTitle(worksheet, rangeRef, text) {
+  worksheet.mergeCells(rangeRef);
+  const cell = worksheet.getCell(rangeRef.split(":")[0]);
+  cell.value = text;
+  applyFill(cell, "#12343B");
+  cell.font = { bold: true, color: { argb: toArgb("#FFFFFF") }, size: 12 };
+  cell.alignment = { vertical: "middle", horizontal: "left" };
+}
+
+function addKpiCard(worksheet, cellAddress, title, value, note, tone) {
+  const fillMap = {
+    orange: "#FFF1EB",
+    teal: "#EAF8F6",
+    navy: "#EEF4F8",
+    sand: "#F7F1E8",
+  };
+  const { row, col } = parseCellRef(cellAddress);
+
+  worksheet.mergeCells(row + 1, col + 1, row + 1, col + 2);
+  worksheet.mergeCells(row + 2, col + 1, row + 2, col + 2);
+  worksheet.mergeCells(row + 3, col + 1, row + 3, col + 2);
+
+  styleRange(worksheet, row + 1, col + 1, row + 3, col + 2, (cell) => {
+    applyFill(cell, fillMap[tone] || "#FFFFFF");
+    applyBorder(cell);
+    cell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+  });
+
+  const titleCell = worksheet.getCell(row + 1, col + 1);
+  titleCell.value = title;
+  titleCell.font = { bold: true, color: { argb: toArgb("#5A6B7B") }, size: 10 };
+
+  const valueCell = worksheet.getCell(row + 2, col + 1);
+  valueCell.value = value;
+  valueCell.font = { bold: true, color: { argb: toArgb("#153147") }, size: 18 };
+
+  const noteCell = worksheet.getCell(row + 3, col + 1);
+  noteCell.value = note;
+  noteCell.font = { color: { argb: toArgb("#5A6B7B") }, size: 10 };
+}
+
+function writeTable(worksheet, startCell, headers, rows, numberFormats = {}) {
   const safeRows = rows.length ? rows : [Array(headers.length).fill("")];
   const { row, col } = parseCellRef(startCell);
-  const headerStart = cellRef(row, col);
-  const headerEnd = cellRef(row, col + headers.length - 1);
-  const dataStartRow = row + 1;
-  const dataEndRow = row + safeRows.length;
-  const fullEnd = cellRef(dataEndRow, col + headers.length - 1);
+  const headerRowNumber = row + 1;
+  const dataStartRowNumber = headerRowNumber + 1;
 
-  sheet.getRange(`${headerStart}:${fullEnd}`).values = [headers, ...safeRows];
-  setHeaderStyle(sheet.getRange(`${headerStart}:${headerEnd}`));
-  setBodyTableStyle(sheet.getRange(`${cellRef(dataStartRow, col)}:${fullEnd}`));
+  headers.forEach((header, index) => {
+    const cell = worksheet.getCell(headerRowNumber, col + index + 1);
+    cell.value = header;
+    applyFill(cell, "#12343B");
+    applyBorder(cell, "C9D2DB");
+    cell.font = { bold: true, color: { argb: toArgb("#FFFFFF") } };
+    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+  });
+
+  safeRows.forEach((currentRow, rowIndex) => {
+    currentRow.forEach((value, cellIndex) => {
+      const cell = worksheet.getCell(dataStartRowNumber + rowIndex, col + cellIndex + 1);
+      cell.value = value;
+      applyBorder(cell);
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: typeof value === "number" ? "right" : "left",
+        wrapText: true,
+      };
+    });
+  });
 
   for (const [colIndex, format] of Object.entries(numberFormats)) {
-    const columnNumber = Number(colIndex);
-    const targetTop = cellRef(dataStartRow, col + columnNumber);
-    const targetBottom = cellRef(dataEndRow, col + columnNumber);
-    sheet.getRange(`${targetTop}:${targetBottom}`).format.numberFormat = format;
+    const targetColumn = col + Number(colIndex) + 1;
+    for (let rowNumber = dataStartRowNumber; rowNumber < dataStartRowNumber + safeRows.length; rowNumber += 1) {
+      worksheet.getCell(rowNumber, targetColumn).numFmt = format;
+    }
   }
+
+  return {
+    endRow: dataStartRowNumber + safeRows.length - 1,
+  };
+}
+
+function autoFitWorksheet(worksheet, minWidth = 12, maxWidth = 36) {
+  worksheet.columns.forEach((column) => {
+    let maxLength = minWidth;
+    column.eachCell({ includeEmpty: true }, (cell) => {
+      let value = cell.value;
+      if (value && typeof value === "object") {
+        if ("richText" in value) {
+          value = value.richText.map((item) => item.text).join("");
+        } else if ("text" in value) {
+          value = value.text;
+        } else if ("result" in value) {
+          value = value.result;
+        }
+      }
+      const lines = String(value ?? "").split("\n");
+      for (const line of lines) {
+        maxLength = Math.max(maxLength, Math.min(maxWidth, line.length + 2));
+      }
+    });
+    column.width = maxLength;
+  });
+}
+
+function configureSheetView(worksheet, freezeRows = 1) {
+  worksheet.views = [{ state: "frozen", ySplit: freezeRows, showGridLines: false }];
 }
 
 export async function buildWorkbookFromPayload(payload) {
@@ -432,7 +487,7 @@ export async function buildWorkbookFromPayload(payload) {
   const startDate = parseInputDate(reportStartDate);
   const endDate = parseInputDate(reportEndDate);
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    throw new Error("보고 기간을 정확히 입력해주세요.");
+    throw new Error("보고 기간을 정확하게 입력해 주세요.");
   }
 
   const allRecords = buildRecords(csvText);
@@ -460,49 +515,33 @@ export async function buildWorkbookFromPayload(payload) {
     memoEntries,
   );
 
-  const workbook = Workbook.create();
-  const dashboardSheet = workbook.worksheets.add("광고주 요약");
-  const overallSheet = workbook.worksheets.add("전체 요약");
-  const dailySheet = workbook.worksheets.add("일자별 추이");
-  const powerlinkSheet = workbook.worksheets.add("파워링크 상세");
-  const shoppingSheet = workbook.worksheets.add("쇼핑검색 상세");
-  const keywordSheet = workbook.worksheets.add("키워드 상세");
-  const memoSheet = workbook.worksheets.add("운영 메모");
-  const sourceSheet = workbook.worksheets.add("원본 데이터");
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "sionAI";
+  workbook.created = new Date();
 
-  dashboardSheet.getRange("A1:N2").merge();
-  dashboardSheet.getRange("A1").values = [[`${brand} 네이버 SA 주간보고서`]];
-  dashboardSheet.getRange("A1").format = {
-    fill: "#12343B",
-    font: { bold: true, color: "#FFFFFF", size: 18 },
-    horizontalAlignment: "center",
-    verticalAlignment: "center",
-  };
+  const dashboardSheet = workbook.addWorksheet("광고주 요약");
+  const overallSheet = workbook.addWorksheet("전체 요약");
+  const dailySheet = workbook.addWorksheet("일자별 추이");
+  const powerlinkSheet = workbook.addWorksheet("파워링크 상세");
+  const shoppingSheet = workbook.addWorksheet("쇼핑검색 상세");
+  const keywordSheet = workbook.addWorksheet("키워드 상세");
+  const memoSheet = workbook.addWorksheet("운영 메모");
+  const sourceSheet = workbook.addWorksheet("원본 데이터");
 
-  dashboardSheet.getRange("A3:N3").merge();
-  dashboardSheet.getRange("A3").values = [[`보고 기간: ${formatDate(startDate)} ~ ${formatDate(endDate)}`]];
-  dashboardSheet.getRange("A3").format = {
-    fill: "#EEF4F8",
-    font: { bold: true, color: "#153147", size: 11 },
-    horizontalAlignment: "center",
-  };
+  dashboardSheet.mergeCells("A1:N2");
+  dashboardSheet.getCell("A1").value = `${brand} 네이버 SA 주간보고서`;
+  applyFill(dashboardSheet.getCell("A1"), "#12343B");
+  dashboardSheet.getCell("A1").font = { bold: true, color: { argb: toArgb("#FFFFFF") }, size: 18 };
+  dashboardSheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
 
-  addKpiCard(
-    dashboardSheet,
-    "A5",
-    "총 광고비",
-    currency(overall.cost),
-    `전체 클릭 ${overall.clicks.toLocaleString("ko-KR")}회`,
-    "orange",
-  );
-  addKpiCard(
-    dashboardSheet,
-    "C5",
-    "총 노출수",
-    overall.impressions.toLocaleString("ko-KR"),
-    `CTR ${overall.ctr.toFixed(2)}%`,
-    "navy",
-  );
+  dashboardSheet.mergeCells("A3:N3");
+  dashboardSheet.getCell("A3").value = `보고 기간: ${formatDate(startDate)} ~ ${formatDate(endDate)}`;
+  applyFill(dashboardSheet.getCell("A3"), "#EEF4F8");
+  dashboardSheet.getCell("A3").font = { bold: true, color: { argb: toArgb("#153147") }, size: 11 };
+  dashboardSheet.getCell("A3").alignment = { horizontal: "center" };
+
+  addKpiCard(dashboardSheet, "A5", "총 광고비", currency(overall.cost), `전체 클릭 ${overall.clicks.toLocaleString("ko-KR")}회`, "orange");
+  addKpiCard(dashboardSheet, "C5", "총 노출수", overall.impressions.toLocaleString("ko-KR"), `CTR ${overall.ctr.toFixed(2)}%`, "navy");
   addKpiCard(
     dashboardSheet,
     "E5",
@@ -536,30 +575,27 @@ export async function buildWorkbookFromPayload(payload) {
     "orange",
   );
 
-  addSectionTitle(dashboardSheet, "A10:N10", "광고주용 핵심 요약");
-  dashboardSheet.getRange(`A11:N${10 + narrative.length}`).merge(true);
-  dashboardSheet.getRange(`A11:A${10 + narrative.length}`).values = narrative.map((line) => [line]);
-  dashboardSheet.getRange(`A11:A${10 + narrative.length}`).format = {
-    wrapText: true,
-    verticalAlignment: "top",
-    font: { color: "#243B53" },
-  };
+  addMergedSectionTitle(dashboardSheet, "A10:N10", "광고주용 전달 요약");
+  dashboardSheet.mergeCells("A11:N16");
+  dashboardSheet.getCell("A11").value = narrative.join("\n");
+  dashboardSheet.getCell("A11").alignment = { vertical: "top", horizontal: "left", wrapText: true };
+  dashboardSheet.getCell("A11").font = { color: { argb: toArgb("#243B53") } };
+  applyBorder(dashboardSheet.getCell("A11"));
 
-  addSectionTitle(dashboardSheet, "A16:G16", "매체별 핵심 지표");
-  const channelRows = channelSummary.map((row) => [
-    row.name,
-    row.cost,
-    row.purchaseConversions,
-    row.purchaseRevenue,
-    row.purchaseRoas / 100,
-    row.purchaseCpa,
-    row.ctr / 100,
-  ]);
+  addMergedSectionTitle(dashboardSheet, "A18:G18", "매체별 전달 지표");
   writeTable(
     dashboardSheet,
-    "A17",
+    "A19",
     ["매체", "광고비", "구매완료 수", "구매완료 매출", "구매완료 ROAS", "구매완료 CPA", "CTR"],
-    channelRows,
+    channelSummary.map((row) => [
+      row.name,
+      row.cost,
+      row.purchaseConversions,
+      row.purchaseRevenue,
+      row.purchaseRoas / 100,
+      row.purchaseCpa,
+      row.ctr / 100,
+    ]),
     {
       1: "#,##0",
       2: "#,##0",
@@ -570,10 +606,10 @@ export async function buildWorkbookFromPayload(payload) {
     },
   );
 
-  addSectionTitle(dashboardSheet, "H16:N16", "상위 키워드");
+  addMergedSectionTitle(dashboardSheet, "H18:N18", "상위 키워드");
   writeTable(
     dashboardSheet,
-    "H17",
+    "H19",
     ["검색어", "매체", "구매완료 수", "구매완료 매출", "구매완료 ROAS"],
     keywordSummary.slice(0, 5).map((row) => [
       row.query,
@@ -589,10 +625,10 @@ export async function buildWorkbookFromPayload(payload) {
     },
   );
 
-  addSectionTitle(dashboardSheet, "A26:N26", "일자별 구매 흐름");
+  addMergedSectionTitle(dashboardSheet, "A28:N28", "일자별 구매 흐름");
   writeTable(
     dashboardSheet,
-    "A27",
+    "A29",
     ["일자", "광고비", "총 클릭수", "구매완료 수", "구매완료 매출", "구매완료 ROAS", "CTR"],
     dailySummary.map((row) => [
       row.dateLabel,
@@ -613,8 +649,6 @@ export async function buildWorkbookFromPayload(payload) {
     },
   );
 
-  dashboardSheet.freezePanes.freezeRows(3);
-
   const overallRows = [
     ["지표", "값", "설명"],
     ["총 광고비", overall.cost, "파워링크 + 쇼핑검색 기준 총 집행 비용"],
@@ -624,16 +658,29 @@ export async function buildWorkbookFromPayload(payload) {
     ["평균 CPC", overall.cpc, "클릭당 평균 비용"],
     ["총 전환수", overall.conversions, "플랫폼 전체 전환 기준"],
     ["총 전환매출", overall.revenue, "플랫폼 전체 전환매출"],
-    ["구매완료 수", overall.purchaseConversions, "광고주 기준 최중요 전환"],
+    ["구매완료 수", overall.purchaseConversions, "광고주 기준 최종 전환"],
     ["구매완료 매출", overall.purchaseRevenue, "구매완료 전환매출"],
     ["구매완료 ROAS", overall.purchaseRoas / 100, "광고주 보고용 핵심 효율 지표"],
     ["구매완료 CPA", overall.purchaseCpa, "구매완료 1건당 비용"],
   ];
-  overallSheet.getRange("A1:C12").values = overallRows;
-  setHeaderStyle(overallSheet.getRange("A1:C1"));
-  overallSheet.getRange("B2:B12").format.numberFormat = "#,##0";
-  overallSheet.getRange("B5").format.numberFormat = "0.0%";
-  overallSheet.getRange("B11").format.numberFormat = "0.0%";
+  overallRows.forEach((row, rowIndex) => {
+    row.forEach((value, colIndex) => {
+      overallSheet.getCell(rowIndex + 1, colIndex + 1).value = value;
+    });
+  });
+  styleRange(overallSheet, 1, 1, 1, 3, (cell) => {
+    applyFill(cell, "#12343B");
+    applyBorder(cell, "C9D2DB");
+    cell.font = { bold: true, color: { argb: toArgb("#FFFFFF") } };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+  });
+  styleRange(overallSheet, 2, 1, overallRows.length, 3, (cell) => {
+    applyBorder(cell);
+    cell.alignment = { vertical: "middle", horizontal: typeof cell.value === "number" ? "right" : "left", wrapText: true };
+  });
+  overallSheet.getColumn(2).numFmt = "#,##0";
+  overallSheet.getCell("B5").numFmt = "0.0%";
+  overallSheet.getCell("B11").numFmt = "0.0%";
 
   writeTable(
     overallSheet,
@@ -659,7 +706,6 @@ export async function buildWorkbookFromPayload(payload) {
       7: "0.0%",
     },
   );
-  overallSheet.freezePanes.freezeRows(1);
 
   writeTable(
     dailySheet,
@@ -703,7 +749,6 @@ export async function buildWorkbookFromPayload(payload) {
       5: "0.0%",
     },
   );
-  dailySheet.freezePanes.freezeRows(1);
 
   writeTable(
     powerlinkSheet,
@@ -728,7 +773,6 @@ export async function buildWorkbookFromPayload(payload) {
       7: "#,##0",
     },
   );
-  powerlinkSheet.freezePanes.freezeRows(1);
 
   writeTable(
     shoppingSheet,
@@ -753,7 +797,6 @@ export async function buildWorkbookFromPayload(payload) {
       7: "#,##0",
     },
   );
-  shoppingSheet.freezePanes.freezeRows(1);
 
   writeTable(
     keywordSheet,
@@ -778,16 +821,15 @@ export async function buildWorkbookFromPayload(payload) {
       7: "#,##0",
     },
   );
-  keywordSheet.freezePanes.freezeRows(1);
 
-  memoSheet.getRange("A1:C1").values = [["구분", "내용", "비고"]];
-  setHeaderStyle(memoSheet.getRange("A1:C1"));
-  const memoRows = memoEntries.length
-    ? memoEntries.map((entry) => ["운영 메모", entry, "직접 입력"])
-    : [["운영 메모", "입력된 메모가 없습니다.", ""]];
-  memoSheet.getRange(`A2:C${memoRows.length + 1}`).values = memoRows;
-  memoSheet.getRange(`B2:B${memoRows.length + 1}`).format = { wrapText: true };
-  memoSheet.freezePanes.freezeRows(1);
+  writeTable(
+    memoSheet,
+    "A1",
+    ["구분", "내용", "비고"],
+    memoEntries.length
+      ? memoEntries.map((entry) => ["운영 메모", entry, "직접 입력"])
+      : [["운영 메모", "입력된 메모가 없습니다.", ""]],
+  );
 
   writeTable(
     sourceSheet,
@@ -832,9 +874,20 @@ export async function buildWorkbookFromPayload(payload) {
       12: "#,##0",
     },
   );
-  sourceSheet.freezePanes.freezeRows(1);
 
-  const sheets = [
+  configureSheetView(dashboardSheet, 3);
+  configureSheetView(overallSheet, 1);
+  configureSheetView(dailySheet, 1);
+  configureSheetView(powerlinkSheet, 1);
+  configureSheetView(shoppingSheet, 1);
+  configureSheetView(keywordSheet, 1);
+  configureSheetView(memoSheet, 1);
+  configureSheetView(sourceSheet, 1);
+
+  dashboardSheet.getColumn(1).width = 16;
+  dashboardSheet.getColumn(7).width = 16;
+
+  [
     dashboardSheet,
     overallSheet,
     dailySheet,
@@ -843,27 +896,15 @@ export async function buildWorkbookFromPayload(payload) {
     keywordSheet,
     memoSheet,
     sourceSheet,
-  ];
-
-  for (const sheet of sheets) {
-    sheet.showGridLines = false;
-    const used = sheet.getUsedRange();
-    if (used) {
-      used.format.autofitColumns();
-      used.format.autofitRows();
-    }
-  }
-
-  dashboardSheet.getRange("A1:N40").format.wrapText = true;
+  ].forEach((worksheet) => autoFitWorksheet(worksheet));
 
   const fileName = `${sanitizeSheetName(brand)}_주간보고서_${formatDateForFile(startDate)}_${formatDateForFile(endDate)}.xlsx`;
-  const xlsx = await SpreadsheetFile.exportXlsx(workbook);
-  const bytes = Buffer.from(xlsx.data);
+  const buffer = await workbook.xlsx.writeBuffer();
 
   return {
     fileName,
-    bytes,
-    contentType: xlsx.mime,
+    bytes: Buffer.from(buffer),
+    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     summary: {
       brand,
       reportRange: `${formatDate(startDate)} ~ ${formatDate(endDate)}`,
