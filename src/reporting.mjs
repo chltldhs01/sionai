@@ -163,7 +163,8 @@ function buildRecords(csvText) {
     .filter((row) => row.length >= header.length)
     .map((row) => Object.fromEntries(header.map((key, index) => [key, row[index] ?? ""])))
     .map((row) => {
-      const date = parseDateLabel(row["일계"]);
+      const dateLabel = row["일계"] ?? row["일별"] ?? row["날짜"];
+      const date = parseDateLabel(dateLabel);
       if (!date) {
         return null;
       }
