@@ -110,7 +110,7 @@ form.addEventListener("submit", async (event) => {
   const fileInput = document.querySelector("#csv-file");
   const file = fileInput.files?.[0];
   if (!file) {
-    alert("CSV 파일을 선택해주세요.");
+    alert("CSV 파일을 선택해 주세요.");
     return;
   }
 
@@ -135,9 +135,18 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
 
-    const result = await response.json();
+    const rawText = await response.text();
+    let result = {};
+    if (rawText) {
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        throw new Error("서버 응답을 읽는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+    }
+
     if (!response.ok) {
-      throw new Error(result.error || "생성 중 오류가 발생했습니다.");
+      throw new Error(result.error || "보고서 생성 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     const { summary } = result;

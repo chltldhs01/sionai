@@ -445,10 +445,15 @@ function writeTable(worksheet, startCell, headers, rows, numberFormats = {}) {
   };
 }
 
-function autoFitWorksheet(worksheet, minWidth = 12, maxWidth = 36) {
+function autoFitWorksheet(worksheet, minWidth = 12, maxWidth = 36, maxRowsToScan = 400) {
   worksheet.columns.forEach((column) => {
     let maxLength = minWidth;
+    let scannedRows = 0;
     column.eachCell({ includeEmpty: true }, (cell) => {
+      if (scannedRows >= maxRowsToScan) {
+        return;
+      }
+      scannedRows += 1;
       let value = cell.value;
       if (value && typeof value === "object") {
         if ("richText" in value) {
@@ -888,16 +893,18 @@ export async function buildWorkbookFromPayload(payload) {
   dashboardSheet.getColumn(1).width = 16;
   dashboardSheet.getColumn(7).width = 16;
 
-  [
-    dashboardSheet,
-    overallSheet,
-    dailySheet,
-    powerlinkSheet,
-    shoppingSheet,
-    keywordSheet,
-    memoSheet,
-    sourceSheet,
-  ].forEach((worksheet) => autoFitWorksheet(worksheet));
+  autoFitWorksheet(dashboardSheet, 12, 28, 120);
+  autoFitWorksheet(overallSheet, 12, 28, 120);
+  autoFitWorksheet(dailySheet, 12, 24, 180);
+  autoFitWorksheet(powerlinkSheet, 12, 24, 250);
+  autoFitWorksheet(shoppingSheet, 12, 24, 250);
+  autoFitWorksheet(keywordSheet, 12, 24, 250);
+  autoFitWorksheet(memoSheet, 12, 40, 120);
+
+  sourceSheet.columns.forEach((column, index) => {
+    const widths = [14, 24, 18, 20, 18, 24, 12, 12, 14, 14, 16, 16, 18];
+    column.width = widths[index] || 14;
+  });
 
   const fileName = `${sanitizeSheetName(brand)}_주간보고서_${formatDateForFile(startDate)}_${formatDateForFile(endDate)}.xlsx`;
   const buffer = await workbook.xlsx.writeBuffer();
