@@ -1,0 +1,41 @@
+바이맘 네이버 SA 주간보고서 생성기
+
+1. 실행 파일
+- start-report-generator.bat
+
+2. 실행 방법
+- start-report-generator.bat 파일을 더블클릭합니다.
+- 브라우저를 열고 아래 주소로 접속합니다.
+- http://localhost:3030
+
+3. 사용 방법
+- 브랜드명 입력
+- 보고 시작일 / 종료일 입력
+- 네이버 SA CSV 파일 업로드
+- 운영 메모 입력
+- 주간보고서 생성 버튼 클릭
+- 생성 완료 후 엑셀 다운로드
+
+4. 생성되는 시트
+- 광고주 요약
+- 전체 요약
+- 일자별 추이
+- 파워링크 상세
+- 쇼핑검색 상세
+- 키워드 상세
+- 운영 메모
+- 원본 데이터
+
+5. 주요 파일 위치
+- 실행 파일:
+  C:\Users\user\Documents\Codex\2026-05-19\https-github-com-coreyhaines31-marketingskills-vscode\start-report-generator.bat
+
+- 안내 HTML:
+  C:\Users\user\Documents\Codex\2026-05-19\https-github-com-coreyhaines31-marketingskills-vscode\guide.html
+
+- 샘플 결과 엑셀:
+  C:\Users\user\Documents\Codex\2026-05-19\https-github-com-coreyhaines31-marketingskills-vscode\outputs\Bymom_주간보고서_20260514_20260518.xlsx
+
+6. 참고
+- 현재는 외부 공개 사이트가 아니라 로컬 웹앱입니다.
+- 실행 후 localhost:3030 주소로 접속해서 사용합니다.

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>바이맘 주간보고서 생성기 안내</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+        background: #f5f3ee;
+        color: #17324a;
+      }
+      .page {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 40px 20px 64px;
+      }
+      .card {
+        background: #ffffff;
+        border: 1px solid #e4e8ec;
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 18px 50px rgba(18, 39, 58, 0.08);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 38px;
+        line-height: 1.08;
+      }
+      p {
+        line-height: 1.7;
+      }
+      h2 {
+        margin-top: 32px;
+        margin-bottom: 12px;
+        font-size: 22px;
+      }
+      ul {
+        padding-left: 20px;
+        line-height: 1.8;
+      }
+      .link-box {
+        margin-top: 18px;
+        padding: 16px 18px;
+        background: #f7f9fb;
+        border-radius: 16px;
+        border: 1px solid #e6edf2;
+      }
+      .path {
+        word-break: break-all;
+        font-family: Consolas, monospace;
+        font-size: 14px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #dd5e3a;
+        color: #fff;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <span class="pill">Bymom Report Generator</span>
+        <h1>바이맘 네이버 SA 주간보고서 생성기</h1>
+        <p>
+          네이버 SA에서 받은 CSV 파일을 업로드하면 광고주 보고용 엑셀 주간보고서를
+          자동으로 생성하는 로컬 웹앱입니다.
+        </p>
+
+        <h2>실행 방법</h2>
+        <ul>
+          <li><code>start-report-generator.bat</code> 파일을 실행합니다.</li>
+          <li>브라우저에서 <code>http://localhost:3030</code> 으로 접속합니다.</li>
+          <li>CSV 파일과 운영 메모를 입력한 뒤 보고서를 생성합니다.</li>
+        </ul>
+
+        <h2>생성되는 시트</h2>
+        <ul>
+          <li>광고주 요약</li>
+          <li>전체 요약</li>
+          <li>일자별 추이</li>
+          <li>파워링크 상세</li>
+          <li>쇼핑검색 상세</li>
+          <li>키워드 상세</li>
+          <li>운영 메모</li>
+          <li>원본 데이터</li>
+        </ul>
+
+        <h2>파일 위치</h2>
+        <div class="link-box">
+          <p><strong>실행 파일</strong></p>
+          <div class="path">C:\Users\user\Documents\Codex\2026-05-19\https-github-com-coreyhaines31-marketingskills-vscode\start-report-generator.bat</div>
+        </div>
+
+        <div class="link-box">
+          <p><strong>샘플 결과 엑셀</strong></p>
+          <div class="path">C:\Users\user\Documents\Codex\2026-05-19\https-github-com-coreyhaines31-marketingskills-vscode\outputs\Bymom_주간보고서_20260514_20260518.xlsx</div>
+        </div>
+
+        <div class="link-box">
+          <p><strong>로컬 접속 주소</strong></p>
+          <div class="path">http://localhost:3030</div>
+        </div>
+      </section>
+    </main>
+  </body>
+  </html>

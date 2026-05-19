@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>바이맘 주간보고서 생성기</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <p class="eyebrow">BOM REPORT STUDIO</p>
+          <h1>주간보고서를 한눈에 보고, 바로 엑셀로 내려받는 화면</h1>
+          <p class="subtitle">
+            네이버 SA CSV와 운영 메모만 넣으면 AE가 광고주에게 바로 공유할 수 있는
+            주간보고서 XLSX를 생성합니다.
+          </p>
+        </div>
+
+        <div class="hero-stats">
+          <article class="mini-card">
+            <span class="mini-label">자동 생성 시트</span>
+            <strong>8개</strong>
+            <p>광고주 요약, 추이표, 매체별 상세, 키워드, 원본 데이터까지 자동 분류</p>
+          </article>
+          <article class="mini-card">
+            <span class="mini-label">추천 입력</span>
+            <strong>CSV + 메모</strong>
+            <p>일주일치 성과 데이터와 운영 이슈만 넣으면 바로 생성</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <section class="panel form-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">INPUT</p>
+              <h2>보고서 생성 정보</h2>
+            </div>
+            <p class="section-note">브랜드, 기간, CSV, 운영 메모를 입력하세요.</p>
+          </div>
+
+          <form id="report-form" class="report-form">
+            <div class="grid two">
+              <label class="field">
+                <span>브랜드명</span>
+                <input type="text" id="brand" value="바이맘" required />
+              </label>
+              <label class="field">
+                <span>CSV 파일</span>
+                <input type="file" id="csv-file" accept=".csv,text/csv" required />
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label class="field">
+                <span>보고 시작일</span>
+                <input type="date" id="start-date" required />
+              </label>
+              <label class="field">
+                <span>보고 종료일</span>
+                <input type="date" id="end-date" required />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>운영 메모</span>
+              <textarea
+                id="memo-text"
+                rows="10"
+                placeholder="예시&#10;5/14 애드부스트 쇼핑 세팅 및 라이브 완료&#10;5/15 파워링크, 쇼핑검색 새벽 시간대 OFF&#10;5/18 모기장 쇼핑검색 일예산 10만원 → 20만원 증액"
+              ></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" id="submit-button">주간보고서 생성</button>
+              <p class="helper-text">생성 후 바로 엑셀 다운로드 링크가 표시됩니다.</p>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel result-panel hidden" id="result-panel">
+          <div class="section-head result-head">
+            <div>
+              <p class="section-kicker">OUTPUT</p>
+              <h2>생성 결과 대시보드</h2>
+            </div>
+            <a id="download-link" class="download-link" href="#">엑셀 다운로드</a>
+          </div>
+
+          <div class="summary-header">
+            <div>
+              <h3 id="summary-brand">바이맘</h3>
+              <p id="summary-range" class="summary-range"></p>
+            </div>
+            <div class="status-pill">
+              <span id="summary-memo-count">0</span>
+              <em>운영 메모 반영</em>
+            </div>
+          </div>
+
+          <section class="kpi-grid" id="kpi-grid"></section>
+
+          <section class="viz-grid">
+            <article class="viz-card">
+              <div class="viz-head">
+                <h3>매체별 비교</h3>
+                <p>광고비와 전환매출을 상대 비교합니다.</p>
+              </div>
+              <div id="channel-bars" class="channel-bars"></div>
+            </article>
+
+            <article class="viz-card">
+              <div class="viz-head">
+                <h3>주요 키워드</h3>
+                <p>비용과 성과가 큰 상위 키워드를 빠르게 확인합니다.</p>
+              </div>
+              <div id="keyword-list" class="keyword-list"></div>
+            </article>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+  </html>
