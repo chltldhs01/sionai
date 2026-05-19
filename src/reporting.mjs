@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 
 const CHANNELS = ["파워링크", "쇼핑검색"];
+const DETAIL_ROW_LIMIT = 200;
 
 function parseCsv(csvText) {
   const rows = [];
@@ -532,7 +533,6 @@ export async function buildWorkbookFromPayload(payload) {
   const shoppingSheet = workbook.addWorksheet("쇼핑검색 상세");
   const keywordSheet = workbook.addWorksheet("키워드 상세");
   const memoSheet = workbook.addWorksheet("운영 메모");
-  const sourceSheet = workbook.addWorksheet("원본 데이터");
 
   dashboardSheet.mergeCells("A1:N2");
   dashboardSheet.getCell("A1").value = `${brand} 네이버 SA 주간보고서`;
@@ -760,7 +760,7 @@ export async function buildWorkbookFromPayload(payload) {
     powerlinkSheet,
     "A1",
     ["캠페인", "광고그룹", "광고비", "클릭수", "구매완료 수", "구매완료 매출", "구매완료 ROAS", "구매완료 CPA"],
-    powerlinkSummary.map((row) => [
+    powerlinkSummary.slice(0, DETAIL_ROW_LIMIT).map((row) => [
       row.campaign,
       row.adGroup,
       row.cost,
@@ -784,7 +784,7 @@ export async function buildWorkbookFromPayload(payload) {
     shoppingSheet,
     "A1",
     ["캠페인", "광고그룹", "광고비", "클릭수", "구매완료 수", "구매완료 매출", "구매완료 ROAS", "구매완료 CPA"],
-    shoppingSummary.map((row) => [
+    shoppingSummary.slice(0, DETAIL_ROW_LIMIT).map((row) => [
       row.campaign,
       row.adGroup,
       row.cost,
@@ -808,7 +808,7 @@ export async function buildWorkbookFromPayload(payload) {
     keywordSheet,
     "A1",
     ["검색어", "매체", "광고비", "클릭수", "구매완료 수", "구매완료 매출", "구매완료 ROAS", "구매완료 CPA"],
-    keywordSummary.map((row) => [
+    keywordSummary.slice(0, DETAIL_ROW_LIMIT).map((row) => [
       row.query,
       row.channel,
       row.cost,
@@ -837,50 +837,6 @@ export async function buildWorkbookFromPayload(payload) {
       : [["운영 메모", "입력된 메모가 없습니다.", ""]],
   );
 
-  writeTable(
-    sourceSheet,
-    "A1",
-    [
-      "일자",
-      "캠페인",
-      "캠페인유형",
-      "광고그룹",
-      "광고그룹유형",
-      "검색어",
-      "노출수",
-      "클릭수",
-      "총비용",
-      "총 전환수",
-      "총 전환매출액",
-      "구매완료 전환수",
-      "구매완료 전환매출액",
-    ],
-    reportRecords.map((row) => [
-      row.dateLabel,
-      row.campaign,
-      row.campaignType,
-      row.adGroup,
-      row.adGroupType,
-      row.query,
-      row.impressions,
-      row.clicks,
-      row.cost,
-      row.conversions,
-      row.revenue,
-      row.purchaseConversions,
-      row.purchaseRevenue,
-    ]),
-    {
-      6: "#,##0",
-      7: "#,##0",
-      8: "#,##0",
-      9: "#,##0",
-      10: "#,##0",
-      11: "#,##0",
-      12: "#,##0",
-    },
-  );
-
   configureSheetView(dashboardSheet, 3);
   configureSheetView(overallSheet, 1);
   configureSheetView(dailySheet, 1);
@@ -888,7 +844,6 @@ export async function buildWorkbookFromPayload(payload) {
   configureSheetView(shoppingSheet, 1);
   configureSheetView(keywordSheet, 1);
   configureSheetView(memoSheet, 1);
-  configureSheetView(sourceSheet, 1);
 
   dashboardSheet.getColumn(1).width = 16;
   dashboardSheet.getColumn(7).width = 16;
@@ -900,11 +855,6 @@ export async function buildWorkbookFromPayload(payload) {
   autoFitWorksheet(shoppingSheet, 12, 24, 250);
   autoFitWorksheet(keywordSheet, 12, 24, 250);
   autoFitWorksheet(memoSheet, 12, 40, 120);
-
-  sourceSheet.columns.forEach((column, index) => {
-    const widths = [14, 24, 18, 20, 18, 24, 12, 12, 14, 14, 16, 16, 18];
-    column.width = widths[index] || 14;
-  });
 
   const fileName = `${sanitizeSheetName(brand)}_주간보고서_${formatDateForFile(startDate)}_${formatDateForFile(endDate)}.xlsx`;
   const buffer = await workbook.xlsx.writeBuffer();
