@@ -3,43 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>바이맘 주간보고서 생성기</title>
+    <title>sionAI 네이버 SA 주간보고서 스튜디오</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="page">
-      <section class="hero-card">
+    <main class="page-shell">
+      <section class="hero-card reveal">
         <div class="hero-copy">
-          <p class="eyebrow">BOM REPORT STUDIO</p>
-          <h1>주간보고서를 한눈에 보고, 바로 엑셀로 내려받는 화면</h1>
+          <p class="eyebrow">SIONAI REPORT STUDIO</p>
+          <h1>광고주가 바로 이해하는 주간보고서를 더 빠르고 선명하게 만듭니다.</h1>
           <p class="subtitle">
-            네이버 SA CSV와 운영 메모만 넣으면 AE가 광고주에게 바로 공유할 수 있는
-            주간보고서 XLSX를 생성합니다.
+            네이버 SA CSV와 운영 메모만 업로드하면, 광고주 공유용 엑셀 보고서를 KPI 요약,
+            차트, 매체별 비교, 키워드 인사이트까지 한 번에 정리합니다.
           </p>
+
+          <div class="hero-tags">
+            <span>대시보드형 UI</span>
+            <span>광고주 공유용 엑셀</span>
+            <span>차트 자동 생성</span>
+          </div>
         </div>
 
-        <div class="hero-stats">
-          <article class="mini-card">
-            <span class="mini-label">자동 생성 시트</span>
-            <strong>7개</strong>
-            <p>광고주 요약, 추이표, 매체별 상세, 키워드, 운영 메모까지 자동 분류</p>
+        <div class="hero-spotlight">
+          <article class="spotlight-card">
+            <span class="spotlight-label">생성 결과물</span>
+            <strong>7개 시트</strong>
+            <p>대시보드, 전체 요약, 일자별 추이, 매체별 상세, 키워드, 운영 메모까지 자동 구성</p>
           </article>
-          <article class="mini-card">
-            <span class="mini-label">추천 입력</span>
-            <strong>CSV + 메모</strong>
-            <p>일주일치 성과 데이터와 운영 이슈만 넣으면 바로 생성</p>
+          <article class="spotlight-card">
+            <span class="spotlight-label">보고서 스타일</span>
+            <strong>가독성 우선</strong>
+            <p>표만 나열하지 않고 카드, 차트, 강조 구간을 사용해 한눈에 읽히게 설계</p>
           </article>
         </div>
       </section>
 
-      <section class="workspace">
-        <section class="panel form-panel">
+      <section class="workspace-grid">
+        <section class="panel form-panel reveal reveal-delay-1">
           <div class="section-head">
             <div>
               <p class="section-kicker">INPUT</p>
               <h2>보고서 생성 정보</h2>
             </div>
-            <p class="section-note">브랜드, 기간, CSV, 운영 메모를 입력하세요.</p>
+            <p class="section-note">브랜드명, 기간, CSV, 운영 메모를 입력하면 바로 보고서를 생성합니다.</p>
           </div>
 
           <form id="report-form" class="report-form">
@@ -56,11 +62,11 @@
 
             <div class="grid two">
               <label class="field">
-                <span>보고 시작일</span>
+                <span>보고서 시작일</span>
                 <input type="date" id="start-date" required />
               </label>
               <label class="field">
-                <span>보고 종료일</span>
+                <span>보고서 종료일</span>
                 <input type="date" id="end-date" required />
               </label>
             </div>
@@ -70,22 +76,48 @@
               <textarea
                 id="memo-text"
                 rows="10"
-                placeholder="예시&#10;5/14 애드부스트 쇼핑 세팅 및 라이브 완료&#10;5/15 파워링크, 쇼핑검색 새벽 시간대 OFF&#10;5/18 모기장 쇼핑검색 일예산 10만원 → 20만원 증액"
+                placeholder="예시&#10;5/14 쇼핑 캠페인 예산 증액&#10;5/15 파워링크 주요 키워드 입찰 조정&#10;5/18 전환 높은 키워드 중심으로 운영"
               ></textarea>
             </label>
 
             <div class="form-actions">
               <button type="submit" id="submit-button">주간보고서 생성</button>
-              <p class="helper-text">생성 후 바로 엑셀 다운로드 링크가 표시됩니다.</p>
+              <p class="helper-text">생성 완료 후 바로 엑셀 다운로드 링크가 표시됩니다.</p>
             </div>
           </form>
         </section>
 
-        <section class="panel result-panel hidden" id="result-panel">
-          <div class="section-head result-head">
+        <aside class="panel guide-panel reveal reveal-delay-2">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">OUTPUT GUIDE</p>
+              <h2>이번 업그레이드 방향</h2>
+            </div>
+          </div>
+
+          <div class="guide-stack">
+            <article class="guide-card">
+              <strong>1. 더 읽기 쉬운 요약 시트</strong>
+              <p>KPI 카드, 핵심 인사이트, 차트 영역을 분리해서 광고주가 첫 시트에서 바로 핵심을 이해하게 만듭니다.</p>
+            </article>
+            <article class="guide-card">
+              <strong>2. 차트 기반 시각화</strong>
+              <p>일자별 광고비와 CTR 추이, 매체별 매출 비중을 자동 차트로 만들어 표만 볼 때보다 이해 속도를 높입니다.</p>
+            </article>
+            <article class="guide-card">
+              <strong>3. 표 레이아웃 정리</strong>
+              <p>열 폭, 헤더 강조, 줄무늬 행, 숫자 포맷을 정리해 엑셀 내 상세 데이터도 훨씬 편하게 읽히도록 바꿉니다.</p>
+            </article>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel result-panel hidden" id="result-panel">
+        <div class="result-top">
+          <div class="section-head">
             <div>
               <p class="section-kicker">OUTPUT</p>
-              <h2>생성 결과 대시보드</h2>
+              <h2>생성 결과 미리보기</h2>
             </div>
             <a id="download-link" class="download-link" href="#">엑셀 다운로드</a>
           </div>
@@ -96,34 +128,72 @@
               <p id="summary-range" class="summary-range"></p>
             </div>
             <div class="status-pill">
-              <span id="summary-memo-count">0</span>
+              <span id="summary-memo-count">0건</span>
               <em>운영 메모 반영</em>
             </div>
           </div>
+        </div>
 
-          <section class="kpi-grid" id="kpi-grid"></section>
+        <section class="kpi-grid" id="kpi-grid"></section>
 
-          <section class="viz-grid">
-            <article class="viz-card">
-              <div class="viz-head">
-                <h3>매체별 비교</h3>
-                <p>광고비와 전환매출을 상대 비교합니다.</p>
+        <section class="dashboard-grid">
+          <article class="dashboard-card trend-card">
+            <div class="viz-head">
+              <div>
+                <h3>일자별 광고비 / CTR 추이</h3>
+                <p>광고비와 클릭률 흐름을 같은 구간에서 함께 확인합니다.</p>
               </div>
-              <div id="channel-bars" class="channel-bars"></div>
-            </article>
+            </div>
+            <div id="trend-chart" class="chart-surface"></div>
+          </article>
 
-            <article class="viz-card">
-              <div class="viz-head">
-                <h3>주요 키워드</h3>
-                <p>비용과 성과가 큰 상위 키워드를 빠르게 확인합니다.</p>
+          <article class="dashboard-card insight-card">
+            <div class="viz-head">
+              <div>
+                <h3>자동 인사이트</h3>
+                <p>보고서에 바로 옮겨 적기 좋도록 핵심 포인트를 정리합니다.</p>
               </div>
-              <div id="keyword-list" class="keyword-list"></div>
-            </article>
-          </section>
+            </div>
+            <div id="insight-list" class="insight-list"></div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid lower">
+          <article class="dashboard-card">
+            <div class="viz-head">
+              <div>
+                <h3>매체별 성과 비교</h3>
+                <p>광고비, 매출, ROAS를 함께 비교합니다.</p>
+              </div>
+            </div>
+            <div id="channel-bars" class="channel-bars"></div>
+          </article>
+
+          <article class="dashboard-card">
+            <div class="viz-head">
+              <div>
+                <h3>매출 비중</h3>
+                <p>매체별 구매완료 매출 비중을 도넛 차트로 보여줍니다.</p>
+              </div>
+            </div>
+            <div id="donut-chart" class="chart-surface donut-surface"></div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid lower">
+          <article class="dashboard-card">
+            <div class="viz-head">
+              <div>
+                <h3>상위 키워드</h3>
+                <p>구매완료 매출과 ROAS 중심으로 정렬된 상위 키워드입니다.</p>
+              </div>
+            </div>
+            <div id="keyword-list" class="keyword-list"></div>
+          </article>
         </section>
       </section>
     </main>
 
     <script type="module" src="/app.js"></script>
   </body>
-  </html>
+</html>
